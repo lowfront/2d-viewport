@@ -1,0 +1,23 @@
+{
+  "name": "2d-viewport",
+  "version": "0.0.1",
+  "description": "",
+  "main": "dist/main.js",
+  "scripts": {
+    "start": "esbuild src/main.ts --watch --bundle --outdir=dist",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "homepage": "https://github.com/lowfront/2d-viewport",
+  "bugs": {
+    "url": "https://github.com/lowfront/2d-viewport/issues"
+  },
+  "author": {
+    "name": "lowfront",
+    "email": "lowfronterior@gmail.com"
+  },
+  "keywords": [],
+  "license": "MIT",
+  "devDependencies": {
+    "esbuild": "^0.14.39"
+  }
+}
