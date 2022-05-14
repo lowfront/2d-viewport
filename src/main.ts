@@ -207,10 +207,10 @@ const viewport = new Viewport({
   maxX: 100,
   minY: -120,
   maxY: 120,
-  // minX: -Infinity,
-  // maxX: Infinity,
-  // minY: -Infinity,
-  // maxY: Infinity,
+  minX: -Infinity,
+  maxX: Infinity,
+  minY: -Infinity,
+  maxY: Infinity,
   lock: false,
   axis: true,
   grid: {
@@ -219,16 +219,22 @@ const viewport = new Viewport({
   }
 });
 
-interface ViewportItemObject {
+interface ViewportItemGraphObject {
+  f: (x: number) => number;
+  color: string;
+  type: 'graph';
+}
+interface ViewportItemShapeObject {
   x: number;
   y: number;
   width: number;
   height: number;
   color: string;
-  type: string;
+  type: 'rect';
 }
+type ViewportItemObject = ViewportItemShapeObject | ViewportItemGraphObject;
 
-class ViewportItem implements ViewportItemObject {
+class ViewportItemShape implements ViewportItemShapeObject {
   private _x!: number;
   public get absX(): number {
     return this._x;
@@ -274,16 +280,26 @@ class ViewportItem implements ViewportItemObject {
   }
 
   color!: string;
-  type!: string;
+  type!: 'rect';
 
   constructor(initProps: ViewportItemObject) {
     Object.assign(this, initProps);
   }
 }
 
+class ViewportItemGraph implements ViewportItemGraphObject {
+  type!: 'graph';
+  f!: (x: number) => number;
+  color!: string;
+
+  constructor(initProps: ViewportItemGraphObject) {
+    Object.assign(this, initProps);
+  }
+}
+
 class ViewportCanvasRenderer {
   viewport: Viewport;
-  items: ViewportItem[] = [];
+  items: ViewportItemObject[] = [];
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
   constructor(viewport: Viewport) {
@@ -299,7 +315,13 @@ class ViewportCanvasRenderer {
   }
 
   addItem(...items: ViewportItemObject[]) {
-    this.items.push(...items.map(item => new ViewportItem(item)));
+    this.items.push(...items.map(item => {
+      if (item.type === 'graph') {
+        return new ViewportItemGraph(item);
+      } else {
+        return new ViewportItemShape(item);
+      }
+    }));
     this.render();
   }
 
@@ -335,18 +357,20 @@ class ViewportCanvasRenderer {
   drawAxis(ctx = this.ctx) {
     if (this.viewport.axis) {
       const { width, height, x, y } = this.viewport;
-      this.ctx.beginPath();
-      this.ctx.moveTo(0, height - y);
-      this.ctx.lineTo(0, -height - y);
-      this.ctx.stroke();
-      this.ctx.beginPath();
-      this.ctx.moveTo(-width - x, 0);
-      this.ctx.lineTo(width - x, 0);
-      this.ctx.stroke();
+      ctx.strokeStyle = 'black';
+      ctx.beginPath();
+      ctx.moveTo(0, height / 2 - y);
+      ctx.lineTo(0, -height / 2 - y);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(-width / 2 - x, 0);
+      ctx.lineTo(width / 2 - x, 0);
+      ctx.stroke();
+      ctx.closePath();
     }
   }
 
-  drawItem(item: ViewportItem, ctx = this.ctx) {
+  drawItem(item: ViewportItemObject, ctx = this.ctx) {
     // 아이템이 뷰포트에 보여야 렌더링되는 로직 추가
     const { zoomFactor } = this.viewport;
     switch (item.type) {
@@ -358,11 +382,23 @@ class ViewportCanvasRenderer {
         item.width * zoomFactor,
         item.height * zoomFactor
       );
+      break;
+    case 'graph':
+      const { f } = item;
+      const { width, height, x, y } = this.viewport;
+      ctx.strokeStyle = item.color;
+      ctx.beginPath();
+      let startX = - width / 2 - x;
+      ctx.moveTo(startX, f(startX));
+      for (let i = 0; i <= width; i+= 1) ctx.lineTo(startX + i, f(startX + i));
+      ctx.stroke();
+      ctx.closePath();
     }
+
   }
 
   renderWithoutRaf(ctx = this.ctx) {
-    const { width, height, x, y, zoomFactor } = this.viewport;
+    const { width, height, x, y } = this.viewport;
     ctx.clearRect(0, 0, width, height);
     ctx.save();
     ctx.translate(width / 2 + x, height / 2 + y);
@@ -381,29 +417,11 @@ class ViewportCanvasRenderer {
 
 async function main() {
   const viewportCanvasRenderer = new ViewportCanvasRenderer(viewport);
-  console.log(viewportCanvasRenderer);
+  console.log(viewportCanvasRenderer, items);
   document.body.append(viewportCanvasRenderer.canvas);
   
-  viewportCanvasRenderer.addItem(
-    {
-      x: 20,
-      y: 20,
-      width: 120,
-      height: 80,
-      color: 'red',
-      type: 'rect',
-    },
-    {
-      x: -150,
-      y: -150,
-      width: 120,
-      height: 100,
-      color: 'skyblue',
-      type: 'rect',
-    },
-  );
+  viewportCanvasRenderer.addItem(...items);
 
-  const firstDevicePixelRatio = devicePixelRatio;
   let isDrag = false;
   let dx = 0, dy = 0, tempX = 0, tempY = 0;
   document.addEventListener('pointerdown', ({ clientX, clientY }) => {
@@ -413,19 +431,14 @@ async function main() {
     tempX = clientX;
     tempY = clientY;
   });
-  document.addEventListener('pointermove', ({ target, movementX, movementY, clientX, clientY }) => {
+  document.addEventListener('pointermove', ({ target, clientX, clientY }) => {
     if (!isDrag) return;
-    const rect = (target as HTMLElement).getBoundingClientRect();
     
-    dx += clientX - tempX;
+    dx += clientX - tempX; // 처음에 값을 빼는 방식으로 temp와 dx 합칠 수 있음
     dy += clientY - tempY;
     
     tempX = clientX;
     tempY = clientY;
-
-    // movementX, movementY do not reflect browser zoom level
-    // dx += movementX / (devicePixelRatio / firstDevicePixelRatio);
-    // dy += movementY / (devicePixelRatio / firstDevicePixelRatio);
 
     viewport.x = dx;
     viewport.y = dy;
@@ -438,7 +451,7 @@ async function main() {
   document.addEventListener('wheel', ev => {
     const { ctrlKey, deltaX, deltaY, clientX, clientY } = ev;
     const rect = (ev.target as HTMLElement).getBoundingClientRect();
-    if (!ctrlKey) return;
+    // if (!ctrlKey) return;
     ev.preventDefault();
     if (deltaY < 0) {
       viewportCanvasRenderer.zoom(zoomFactor => zoomFactor + 0.1, clientX - rect.left, clientY - rect.top); // send layerX, layerY
@@ -456,4 +469,39 @@ async function main() {
     viewportCanvasRenderer.render();
   });
 }
+
+const items: ViewportItemObject[] = [
+  {
+    x: 20,
+    y: 20,
+    width: 120,
+    height: 80,
+    color: 'red',
+    type: 'rect',
+  },
+  {
+    x: -150,
+    y: -150,
+    width: 120,
+    height: 100,
+    color: 'skyblue',
+    type: 'rect',
+  },
+  {
+    type: 'graph',
+    f(x) { return -x + 30; },
+    color: 'green',
+  },
+  {
+    type: 'graph',
+    f(x) { return 1/50 * x * x; },
+    color: 'blue',
+  },
+  {
+    type: 'graph',
+    f(x) { return Math.sin(x / 50) * 50; },
+    color: 'gray',
+  },
+];
+
 main();
