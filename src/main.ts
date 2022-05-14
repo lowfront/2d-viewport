@@ -203,10 +203,10 @@ const viewport = new Viewport({
   zoomFactor: 1,
   x: 0,
   y: 0,
-  minX: -100,
-  maxX: 100,
-  minY: -120,
-  maxY: 120,
+  // minX: -100,
+  // maxX: 100,
+  // minY: -120,
+  // maxY: 120,
   minX: -Infinity,
   maxX: Infinity,
   minY: -Infinity,
@@ -402,6 +402,7 @@ class ViewportCanvasRenderer {
     }
 
   }
+
 
   renderWithoutRaf(ctx = this.ctx) {
     const { width, height, x, y } = this.viewport;
