@@ -168,17 +168,34 @@ const viewport = new Viewport({
   }
 });
 
+interface ViewportItem {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  color: string;
+  type: string;
+}
+
 class ViewportCanvasRenderer {
   viewport: Viewport;
+  items: ViewportItem[] = [];
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
-
   constructor(viewport: Viewport) {
+
     this.viewport = viewport;
     const canvas = this.canvas = document.createElement('canvas');
-    canvas.width = viewport.width;
-    canvas.height = viewport.height;
+    canvas.width = viewport.width * devicePixelRatio;
+    canvas.height = viewport.height * devicePixelRatio;
     this.ctx = canvas.getContext('2d') as NonNullable<typeof this.ctx>;
+    canvas.style.width = viewport.width + 'px';
+    canvas.style.height = viewport.height + 'px';
+    this.render();
+  }
+
+  addItem(...items: ViewportItem[]) {
+    this.items.push(...items);
     this.render();
   }
 
@@ -186,25 +203,41 @@ class ViewportCanvasRenderer {
     if (this.viewport.axis) {
       const { width, height, x, y } = this.viewport;
       this.ctx.beginPath();
-      this.ctx.moveTo(0, height - y);
-      this.ctx.lineTo(0, -height - y);
+      this.ctx.moveTo(0, (height - y) * devicePixelRatio);
+      this.ctx.lineTo(0, (-height - y) * devicePixelRatio);
       this.ctx.stroke();
       this.ctx.beginPath();
-      this.ctx.moveTo(-width - x, 0);
-      this.ctx.lineTo(width - x, 0);
+      this.ctx.moveTo((-width - x) * devicePixelRatio, 0);
+      this.ctx.lineTo((width - x) * devicePixelRatio, 0);
       this.ctx.stroke();
     }
   }
 
-  render(ctx = this.ctx) {
+  drawItem(item: ViewportItem, ctx = this.ctx) {
+    // 아이템이 뷰포트에 보여야 렌더링되는 로직 추가
+
+    switch (item.type) {
+    case 'rect':
+      ctx.fillStyle = item.color;
+      ctx.fillRect(item.x * devicePixelRatio, item.y * devicePixelRatio, item.width * devicePixelRatio, item.height * devicePixelRatio);
+    }
+  }
+
+  renderWithoutRaf(ctx = this.ctx) {
     const { width, height, x, y } = this.viewport;
-    ctx.clearRect(0, 0, width, height);
+    ctx.clearRect(0, 0, width * devicePixelRatio, height * devicePixelRatio);
     ctx.save();
-    ctx.translate(width / 2 + x, height / 2 + y);
+    ctx.translate((width / 2 + x) * devicePixelRatio, (height / 2 + y) * devicePixelRatio);
+
+    for (const item of this.items) this.drawItem(item);
 
     this.drawAxis(ctx);
 
     ctx.restore();
+  }
+
+  render(ctx = this.ctx) {
+    requestAnimationFrame(() => this.renderWithoutRaf(ctx));
   }
 }
 
@@ -213,6 +246,25 @@ async function main() {
   console.log(viewportCanvasRenderer);
   document.body.append(viewportCanvasRenderer.canvas);
   
+  viewportCanvasRenderer.addItem(
+    {
+      x: 20,
+      y: 20,
+      width: 120,
+      height: 80,
+      color: 'red',
+      type: 'rect',
+    },
+    {
+      x: -150,
+      y: -150,
+      width: 120,
+      height: 100,
+      color: 'skyblue',
+      type: 'rect',
+    },
+  );
+
   let isDrag = false;
   let dx = 0, dy = 0;
   document.addEventListener('pointerdown', ({ pageX, pageY }) => {
@@ -227,7 +279,6 @@ async function main() {
     viewport.x = dx;
     viewport.y = dy;
     viewportCanvasRenderer.render();
-    console.log(viewport.x, viewport.y);
   });
   document.addEventListener('pointerup', ({}) => {
     isDrag = false;
