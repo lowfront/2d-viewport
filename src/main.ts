@@ -386,11 +386,17 @@ class ViewportCanvasRenderer {
     case 'graph':
       const { f } = item;
       const { width, height, x, y } = this.viewport;
-      ctx.strokeStyle = item.color;
+      // 확대/축소 비율을 고려하지 않고 translate만 고려한 캔버스의 왼쪽 끝, 오른쪽 끝 저장
+      const startX = - width / 2 - x;
+      const endX = width / 2 - x;
+
       ctx.beginPath();
-      let startX = - width / 2 - x;
+      ctx.strokeStyle = item.color;
+      ctx.fillRect(startX, 0, 10, 10);
+      ctx.fillRect(endX - 10, 0, 10, 10);
       ctx.moveTo(startX, f(startX));
-      for (let i = 0; i <= width; i+= 1) ctx.lineTo(startX + i, f(startX + i));
+      // 왼쪽 끝에서 오른쪽 끝까지 canvas.width 크기만큼 루프하고, y값은 확대축소 비율에 따라 보정
+      for (let i = 0; i <= width; i+= 1) ctx.lineTo(startX + i, f((startX + i) / zoomFactor) * zoomFactor);
       ctx.stroke();
       ctx.closePath();
     }
