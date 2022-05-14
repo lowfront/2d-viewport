@@ -323,8 +323,8 @@ class ViewportCanvasRenderer {
     const willMovedY = absY - scaledY; // absY - absY * multipliedZoomFactor => absY(1 - multipliedZoomFactor)
     
     this.viewport.zoomFactor = newZoomFactor;
-    console.log(this.viewport.zoomFactor)
-    if (newZoomFactor !== this.viewport.zoomFactor) return this.render(ctx);
+    // console.log(this.viewport.zoomFactor)
+    // if (newZoomFactor !== this.viewport.zoomFactor) return this.render(ctx); // bug... in minZoomFactor with x, y limit
 
     this.viewport.x += willMovedX;
     this.viewport.y += willMovedY;
