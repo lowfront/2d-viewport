@@ -258,8 +258,8 @@
         const { width, height, x, y } = this.viewport;
         ctx.strokeStyle = "black";
         ctx.beginPath();
-        ctx.moveTo(0, height / 2 - y);
-        ctx.lineTo(0, -height / 2 - y);
+        ctx.moveTo(0, height / 2 + y);
+        ctx.lineTo(0, -height / 2 + y);
         ctx.stroke();
         ctx.beginPath();
         ctx.moveTo(-width / 2 - x, 0);
@@ -294,6 +294,7 @@
       ctx.clearRect(0, 0, width, height);
       ctx.save();
       ctx.translate(width / 2 + x, height / 2 + y);
+      ctx.scale(1, -1);
       for (const item of this.items)
         this.drawItem(item);
       this.drawAxis(ctx);
@@ -419,9 +420,9 @@
     {
       type: "graph",
       f(x) {
-        return Math.tan(x / 50) * 50;
+        return Math.pow(x / 50, Math.E);
       },
-      color: "yellow"
+      color: "red"
     }
   ];
   main();
