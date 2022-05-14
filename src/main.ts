@@ -27,101 +27,101 @@ interface ViewportObject {
 class Viewport implements ViewportObject {
   private _width!: number;
   public get absWidth() {
-    return this._width / devicePixelRatio;
+    return this._width;
   }
   public get width() {
     return this._width;
   }
   public set width(value: number) {
-    this._width = value * devicePixelRatio;
+    this._width = value;
   }
 
   private _height!: number;
   public get absHeight() {
-    return this._height / devicePixelRatio;
+    return this._height;
   }
   public get height() {
     return this._height;
   }
   public set height(value: number) {
-    this._height = value * devicePixelRatio;
+    this._height = value;
   }
 
   private _zoomFactor!: number;
   public get absZoomFactor() {
-    return this._zoomFactor / devicePixelRatio;
+    return this._zoomFactor;
   }
   public get zoomFactor() {
     return this._zoomFactor;
   }
   public set zoomFactor(value: number) {
-    this._zoomFactor = value * devicePixelRatio;
+    this._zoomFactor = value;
   }
 
   private _x!: number;
   public get absX() {
-    return this._x / devicePixelRatio;
+    return this._x;
   }
   public get x() {
     return this._x;
   }
   public set x(value: number) {
-    this._x = Math.max(this._minX, Math.min(this._maxX, value * devicePixelRatio));
+    this._x = Math.max(this._minX, Math.min(this._maxX, value));
   }
 
   private _y!: number;
   public get absY() {
-    return this._y / devicePixelRatio;
+    return this._y;
   }
   public get y() {
     return this._y;
   }
   public set y(value: number) {
-    this._y = Math.max(this._minY, Math.min(this._maxY, value * devicePixelRatio));
+    this._y = Math.max(this._minY, Math.min(this._maxY, value));
   }
 
   private _minX: number = -Infinity;
   public get absMinX() {
-    return this._minX / devicePixelRatio;
+    return this._minX;
   }
   public get minX() {
     return this._minX;
   }
   public set minX(value: number) {
-    this._minX = value * devicePixelRatio;
+    this._minX = value;
   }
 
   private _maxX: number = Infinity;
   public get absMaxX() {
-    return this._maxX / devicePixelRatio;
+    return this._maxX;
   }
   public get maxX() {
     return this._maxX;
   }
   public set maxX(value: number) {
-    this._maxX = value * devicePixelRatio;
+    this._maxX = value;
   }
 
   private _minY: number = -Infinity;
   public get absMinY() {
-    return this._minY / devicePixelRatio;
+    return this._minY;
   }
   public get minY() {
     return this._minY;
   }
   public set minY(value: number) {
-    this._minY = value * devicePixelRatio;
+    this._minY = value;
   }
 
   private _maxY: number = Infinity;
   public get absMaxY() {
-    return this._maxY / devicePixelRatio;
+    return this._maxY;
   }
   public get maxY() {
     return this._maxY;
   }
   public set maxY(value: number) {
-    this._maxY = value * devicePixelRatio;
+    this._maxY = value;
   }
 
   private _lock: boolean = false;
@@ -183,10 +183,14 @@ const viewport = new Viewport({
   zoomFactor: 1,
   x: 0,
   y: 0,
-  minX: -100,
-  maxX: 100,
-  minY: -120,
-  maxY: 120,
+  // minX: -100,
+  // maxX: 100,
+  // minY: -120,
+  // maxY: 120,
+  minX: -Infinity,
+  maxX: Infinity,
+  minY: -Infinity,
+  maxY: Infinity,
   lock: false,
   axis: true,
   grid: {
@@ -207,46 +211,46 @@ interface ViewportItemObject {
 class ViewportItem implements ViewportItemObject {
   private _x!: number;
   public get absX(): number {
-    return this._x / devicePixelRatio;
+    return this._x;
   }
   public get x(): number {
     return this._x;
   }
   public set x(value: number) {
-    this._x = value * devicePixelRatio;
+    this._x = value;
   }
   
   private _y!: number;
   public get absY(): number {
-    return this._y / devicePixelRatio;
+    return this._y;
   }
   public get y(): number {
     return this._y;
   }
   public set y(value: number) {
-    this._y = value * devicePixelRatio;
+    this._y = value;
   }
 
   private _width!: number;
   public get absWidth(): number {
-    return this._width / devicePixelRatio;
+    return this._width;
   }
   public get width(): number {
     return this._width;
   }
   public set width(value: number) {
-    this._width = value * devicePixelRatio;
+    this._width = value;
   }
 
   private _height!: number;
   public get absHeight(): number {
-    return this._height / devicePixelRatio;
+    return this._height;
   }
   public get height(): number {
     return this._height;
   }
   public set height(value: number) {
-    this._height = value * devicePixelRatio;
+    this._height = value;
   }
 
   color!: string;
@@ -277,6 +281,15 @@ class ViewportCanvasRenderer {
   addItem(...items: ViewportItemObject[]) {
     this.items.push(...items.map(item => new ViewportItem(item)));
     this.render();
+  }
+
+  zoom(val: TypeOrFunction<number>, layerX: number, layerY: number, ctx = this.ctx) {
+    const { zoomFactor } = this.viewport;
+    console.log(layerX, layerY);
+    // get position in viewport by layer position
+    this.canvas
+    // typeof val === 'function' ? val(zoomFactor) : val;
+    
   }
 
   drawAxis(ctx = this.ctx) {
@@ -349,8 +362,8 @@ async function main() {
   let dx = 0, dy = 0;
   document.addEventListener('pointerdown', ({ pageX, pageY }) => {
     isDrag = true;
-    dx = viewport.absX;
-    dy = viewport.absY;
+    dx = viewport.x;
+    dy = viewport.y;
   });
   document.addEventListener('pointermove', ({ movementX, movementY }) => {
     if (!isDrag) return;
@@ -363,6 +376,18 @@ async function main() {
   document.addEventListener('pointerup', ({}) => {
     isDrag = false;
   });
+
+  document.addEventListener('wheel', ev => {
+    const { ctrlKey, deltaX, deltaY, clientX, clientY } = ev;
+    const rect = (ev.target as HTMLElement).getBoundingClientRect();
+    ev.preventDefault();
+    if (deltaY < 0) {
+      // console.log('zoom in');
+      viewportCanvasRenderer.zoom(zoomFactor => zoomFactor + 20, clientX - rect.left, clientY - rect.top); // send layerX, layerY
+    } else {
+      // console.log('zoom out');
+    }
+  }, { passive: false });
 
   const reset = document.createElement('button');
   document.body.append(reset);
