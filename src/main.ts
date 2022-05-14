@@ -121,8 +121,8 @@ const items: ViewportItemObject[] = [
   },
   {
     type: 'graph',
-    f(x) { return Math.tan(x / 50) * 50; },
-    color: 'yellow',
+    f(x) { return Math.pow(x / 50, Math.E); },
+    color: 'red',
   },
 ];
 

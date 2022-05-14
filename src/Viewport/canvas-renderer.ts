@@ -64,8 +64,8 @@ export class ViewportCanvasRenderer {
       const { width, height, x, y } = this.viewport;
       ctx.strokeStyle = 'black';
       ctx.beginPath();
-      ctx.moveTo(0, height / 2 - y);
-      ctx.lineTo(0, -height / 2 - y);
+      ctx.moveTo(0, height / 2 + y);
+      ctx.lineTo(0, -height / 2 + y);
       ctx.stroke();
       ctx.beginPath();
       ctx.moveTo(-width / 2 - x, 0);
@@ -114,7 +114,7 @@ export class ViewportCanvasRenderer {
     ctx.clearRect(0, 0, width, height);
     ctx.save();
     ctx.translate(width / 2 + x, height / 2 + y);
-
+    ctx.scale(1, -1); // should change with axis y;
     for (const item of this.items) this.drawItem(item);
 
     this.drawAxis(ctx);
