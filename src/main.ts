@@ -284,12 +284,30 @@ class ViewportCanvasRenderer {
   }
 
   zoom(val: TypeOrFunction<number>, layerX: number, layerY: number, ctx = this.ctx) {
-    const { zoomFactor } = this.viewport;
-    console.log(layerX, layerY);
+    const { width, height, x, y, zoomFactor } = this.viewport;
+
+
+
     // get position in viewport by layer position
-    this.canvas
-    // typeof val === 'function' ? val(zoomFactor) : val;
+    const absX = layerX - (width / 2 + x);
+    const absY = layerY - (height / 2 + y);
     
+    console.log(absX, absY);
+
+    const newZoomFactor = typeof val === 'function' ? val(zoomFactor) : val;
+    const multipliedZoomFactor = newZoomFactor / zoomFactor;
+
+    const scaledX = absX * multipliedZoomFactor;
+    const scaledY = absY * multipliedZoomFactor;
+    
+    const willMovedX = absX - scaledX; // absX - absX * multipliedZoomFactor => absX(1 - multipliedZoomFactor)
+    const willMovedY = absY - scaledY; // absY - absY * multipliedZoomFactor => absY(1 - multipliedZoomFactor)
+    
+    this.viewport.zoomFactor = newZoomFactor;
+    this.viewport.x += willMovedX;
+    this.viewport.y += willMovedY;
+
+    this.render(ctx);
   }
 
   drawAxis(ctx = this.ctx) {
@@ -308,16 +326,21 @@ class ViewportCanvasRenderer {
 
   drawItem(item: ViewportItem, ctx = this.ctx) {
     // 아이템이 뷰포트에 보여야 렌더링되는 로직 추가
-
+    const { zoomFactor } = this.viewport;
     switch (item.type) {
     case 'rect':
       ctx.fillStyle = item.color;
-      ctx.fillRect(item.x, item.y, item.width, item.height);
+      ctx.fillRect(
+        item.x * zoomFactor,
+        item.y * zoomFactor,
+        item.width * zoomFactor,
+        item.height * zoomFactor
+      );
     }
   }
 
   renderWithoutRaf(ctx = this.ctx) {
-    const { width, height, x, y } = this.viewport;
+    const { width, height, x, y, zoomFactor } = this.viewport;
     ctx.clearRect(0, 0, width, height);
     ctx.save();
     ctx.translate(width / 2 + x, height / 2 + y);
@@ -382,10 +405,9 @@ async function main() {
     const rect = (ev.target as HTMLElement).getBoundingClientRect();
     ev.preventDefault();
     if (deltaY < 0) {
-      // console.log('zoom in');
-      viewportCanvasRenderer.zoom(zoomFactor => zoomFactor + 20, clientX - rect.left, clientY - rect.top); // send layerX, layerY
+      viewportCanvasRenderer.zoom(zoomFactor => zoomFactor + 0.1, clientX - rect.left, clientY - rect.top); // send layerX, layerY
     } else {
-      // console.log('zoom out');
+      viewportCanvasRenderer.zoom(zoomFactor => zoomFactor - 0.1, clientX - rect.left, clientY - rect.top); // send layerX, layerY
     }
   }, { passive: false });
 
@@ -393,6 +415,7 @@ async function main() {
   document.body.append(reset);
   reset.textContent = 'Reset';
   reset.addEventListener('click', () => {
+    viewport.zoomFactor = 1;
     viewport.x = viewport.y = 0;
     viewportCanvasRenderer.render();
   });
