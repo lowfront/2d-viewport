@@ -346,7 +346,7 @@ class ViewportCanvasRenderer {
     
     this.viewport.zoomFactor = newZoomFactor;
     // console.log(this.viewport.zoomFactor)
-    // if (newZoomFactor !== this.viewport.zoomFactor) return this.render(ctx); // bug... in minZoomFactor with x, y limit
+    if (newZoomFactor !== this.viewport.zoomFactor) return this.render(ctx); // bug... in minZoomFactor with x, y limit
 
     this.viewport.x += willMovedX;
     this.viewport.y += willMovedY;
@@ -392,8 +392,8 @@ class ViewportCanvasRenderer {
 
       ctx.beginPath();
       ctx.strokeStyle = item.color;
-      ctx.fillRect(startX, 0, 10, 10);
-      ctx.fillRect(endX - 10, 0, 10, 10);
+      // ctx.fillRect(startX, 0, 10, 10);
+      // ctx.fillRect(endX - 10, 0, 10, 10);
       ctx.moveTo(startX, f(startX));
       // 왼쪽 끝에서 오른쪽 끝까지 canvas.width 크기만큼 루프하고, y값은 확대축소 비율에 따라 보정
       for (let i = 0; i <= width; i+= 1) ctx.lineTo(startX + i, f((startX + i) / zoomFactor) * zoomFactor);
