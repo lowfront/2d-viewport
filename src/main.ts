@@ -403,17 +403,30 @@ async function main() {
     },
   );
 
+  const firstDevicePixelRatio = devicePixelRatio;
   let isDrag = false;
-  let dx = 0, dy = 0;
-  document.addEventListener('pointerdown', ({ pageX, pageY }) => {
+  let dx = 0, dy = 0, tempX = 0, tempY = 0;
+  document.addEventListener('pointerdown', ({ clientX, clientY }) => {
     isDrag = true;
     dx = viewport.x;
     dy = viewport.y;
+    tempX = clientX;
+    tempY = clientY;
   });
-  document.addEventListener('pointermove', ({ movementX, movementY }) => {
+  document.addEventListener('pointermove', ({ target, movementX, movementY, clientX, clientY }) => {
     if (!isDrag) return;
-    dx += movementX;
-    dy += movementY;
+    const rect = (target as HTMLElement).getBoundingClientRect();
+    
+    dx += clientX - tempX;
+    dy += clientY - tempY;
+    
+    tempX = clientX;
+    tempY = clientY;
+
+    // movementX, movementY do not reflect browser zoom level
+    // dx += movementX / (devicePixelRatio / firstDevicePixelRatio);
+    // dy += movementY / (devicePixelRatio / firstDevicePixelRatio);
+
     viewport.x = dx;
     viewport.y = dy;
     viewportCanvasRenderer.render();
@@ -425,6 +438,7 @@ async function main() {
   document.addEventListener('wheel', ev => {
     const { ctrlKey, deltaX, deltaY, clientX, clientY } = ev;
     const rect = (ev.target as HTMLElement).getBoundingClientRect();
+    if (!ctrlKey) return;
     ev.preventDefault();
     if (deltaY < 0) {
       viewportCanvasRenderer.zoom(zoomFactor => zoomFactor + 0.1, clientX - rect.left, clientY - rect.top); // send layerX, layerY
