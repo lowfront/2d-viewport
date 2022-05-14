@@ -1,4 +1,3 @@
-import Hammer from 'hammerjs';
 import './main.css';
 
 type Function1<T> = (value: T) => T;
@@ -33,6 +32,7 @@ class Viewport implements ViewportObject {
   public set width(value: number) {
     this._width = value;
   }
+
   private _height!: number;
   public get height() {
     return this._height;
@@ -40,6 +40,7 @@ class Viewport implements ViewportObject {
   public set height(value: number) {
     this._height = value;
   }
+
   private _zoomFactor!: number;
   public get zoomFactor() {
     return this._zoomFactor;
@@ -47,62 +48,71 @@ class Viewport implements ViewportObject {
   public set zoomFactor(value: number) {
     this._zoomFactor = value;
   }
+
   private _x!: number;
   public get x() {
     return this._x;
   }
   public set x(value: number) {
-    this._x = value;
+    this._x = Math.max(this._minX, Math.min(this._maxX, value));
   }
+
   private _y!: number;
   public get y() {
     return this._y;
   }
   public set y(value: number) {
-    this._y = value;
+    this._y = Math.max(this._minY, Math.min(this._maxY, value));;
   }
-  private _minX!: number;
+
+  private _minX: number = -Infinity;
   public get minX() {
     return this._minX;
   }
   public set minX(value: number) {
     this._minX = value;
   }
-  private _maxX!: number;
+
+  private _maxX: number = Infinity;
   public get maxX() {
     return this._maxX;
   }
   public set maxX(value: number) {
     this._maxX = value;
   }
-  private _minY!: number;
+
+  private _minY: number = -Infinity;
   public get minY() {
     return this._minY;
   }
   public set minY(value: number) {
     this._minY = value;
   }
-  private _maxY!: number;
+
+  private _maxY: number = Infinity;
   public get maxY() {
     return this._maxY;
   }
   public set maxY(value: number) {
     this._maxY = value;
   }
-  private _lock!: boolean;
+
+  private _lock: boolean = false;
   public get lock() {
     return this._lock;
   }
   public set lock(value: boolean) {
     this._lock = value;
   }
-  private _axis!: boolean;
+
+  private _axis: boolean = false;
   public get axis() {
     return this._axis;
   }
   public set axis(value: boolean) {
     this._axis = value;
   }
+
   private _grid!: ViewportGridObject;
   public get grid() {
     return this._grid;
@@ -112,6 +122,8 @@ class Viewport implements ViewportObject {
   }
 
   constructor(initObject: ViewportObject) {
+    const { minX, maxX, minY, maxY } = initObject;
+    Object.assign(this, { minX, maxX, minY, maxY });
     Object.assign(this, initObject);
   }
 
@@ -120,16 +132,16 @@ class Viewport implements ViewportObject {
     return this;
   }
   setX(x: TypeOrFunction<number>) {
-    this._x = typeof x === 'function' ? x(this._x) : x;
+    this.x = typeof x === 'function' ? x(this.x) : x;
     return this;
   }
   setY(y: TypeOrFunction<number>) {
-    this._y = typeof y === 'function' ? y(this._y) : y;
+    this.y = typeof y === 'function' ? y(this.y) : y;
     return this;
   }
   setPosition(x: TypeOrFunction<number>, y: TypeOrFunction<number>) {
-    this._x = typeof x === 'function' ? x(this._x) : x;
-    this._y = typeof y === 'function' ? y(this._y) : y;
+    this.x = typeof x === 'function' ? x(this.x) : x;
+    this.y = typeof y === 'function' ? y(this.y) : y;
     return this;
   }
   setZoom(zoomFactor: TypeOrFunction<number>) {
@@ -142,12 +154,12 @@ const viewport = new Viewport({
   width: 400,
   height: 300,
   zoomFactor: 1,
-  x: 50,
-  y: 50,
-  minX: -Infinity,
-  maxX: Infinity,
-  minY: -Infinity,
-  maxY: Infinity,
+  x: 0,
+  y: 0,
+  minX: -100,
+  maxX: 100,
+  minY: -120,
+  maxY: 120,
   lock: false,
   axis: true,
   grid: {
@@ -202,18 +214,31 @@ async function main() {
   document.body.append(viewportCanvasRenderer.canvas);
   
   let isDrag = false;
+  let dx = 0, dy = 0;
   document.addEventListener('pointerdown', ({ pageX, pageY }) => {
     isDrag = true;
+    dx = viewport.x;
+    dy = viewport.y;
   });
   document.addEventListener('pointermove', ({ movementX, movementY }) => {
     if (!isDrag) return;
-    viewport.x += movementX;
-    viewport.y += movementY;
+    dx += movementX;
+    dy += movementY;
+    viewport.x = dx;
+    viewport.y = dy;
     viewportCanvasRenderer.render();
     console.log(viewport.x, viewport.y);
   });
   document.addEventListener('pointerup', ({}) => {
     isDrag = false;
+  });
+
+  const reset = document.createElement('button');
+  document.body.append(reset);
+  reset.textContent = 'Reset';
+  reset.addEventListener('click', () => {
+    viewport.x = viewport.y = 0;
+    viewportCanvasRenderer.render();
   });
 }
 main();
