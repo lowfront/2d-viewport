@@ -26,75 +26,102 @@ interface ViewportObject {
 
 class Viewport implements ViewportObject {
   private _width!: number;
+  public get absWidth() {
+    return this._width / devicePixelRatio;
+  }
   public get width() {
     return this._width;
   }
   public set width(value: number) {
-    this._width = value;
+    this._width = value * devicePixelRatio;
   }
 
   private _height!: number;
+  public get absHeight() {
+    return this._height / devicePixelRatio;
+  }
   public get height() {
     return this._height;
   }
   public set height(value: number) {
-    this._height = value;
+    this._height = value * devicePixelRatio;
   }
 
   private _zoomFactor!: number;
+  public get absZoomFactor() {
+    return this._zoomFactor / devicePixelRatio;
+  }
   public get zoomFactor() {
     return this._zoomFactor;
   }
   public set zoomFactor(value: number) {
-    this._zoomFactor = value;
+    this._zoomFactor = value * devicePixelRatio;
   }
 
   private _x!: number;
+  public get absX() {
+    return this._x / devicePixelRatio;
+  }
   public get x() {
     return this._x;
   }
   public set x(value: number) {
-    this._x = Math.max(this._minX, Math.min(this._maxX, value));
+    this._x = Math.max(this._minX, Math.min(this._maxX, value * devicePixelRatio));
   }
 
   private _y!: number;
+  public get absY() {
+    return this._y / devicePixelRatio;
+  }
   public get y() {
     return this._y;
   }
   public set y(value: number) {
-    this._y = Math.max(this._minY, Math.min(this._maxY, value));;
+    this._y = Math.max(this._minY, Math.min(this._maxY, value * devicePixelRatio));
   }
 
   private _minX: number = -Infinity;
+  public get absMinX() {
+    return this._minX / devicePixelRatio;
+  }
   public get minX() {
     return this._minX;
   }
   public set minX(value: number) {
-    this._minX = value;
+    this._minX = value * devicePixelRatio;
   }
 
   private _maxX: number = Infinity;
+  public get absMaxX() {
+    return this._maxX / devicePixelRatio;
+  }
   public get maxX() {
     return this._maxX;
   }
   public set maxX(value: number) {
-    this._maxX = value;
+    this._maxX = value * devicePixelRatio;
   }
 
   private _minY: number = -Infinity;
+  public get absMinY() {
+    return this._minY / devicePixelRatio;
+  }
   public get minY() {
     return this._minY;
   }
   public set minY(value: number) {
-    this._minY = value;
+    this._minY = value * devicePixelRatio;
   }
 
   private _maxY: number = Infinity;
+  public get absMaxY() {
+    return this._maxY / devicePixelRatio;
+  }
   public get maxY() {
     return this._maxY;
   }
   public set maxY(value: number) {
-    this._maxY = value;
+    this._maxY = value * devicePixelRatio;
   }
 
   private _lock: boolean = false;
@@ -168,13 +195,66 @@ const viewport = new Viewport({
   }
 });
 
-interface ViewportItem {
+interface ViewportItemObject {
   x: number;
   y: number;
   width: number;
   height: number;
   color: string;
   type: string;
+}
+
+class ViewportItem implements ViewportItemObject {
+  private _x!: number;
+  public get absX(): number {
+    return this._x / devicePixelRatio;
+  }
+  public get x(): number {
+    return this._x;
+  }
+  public set x(value: number) {
+    this._x = value * devicePixelRatio;
+  }
+  
+  private _y!: number;
+  public get absY(): number {
+    return this._y / devicePixelRatio;
+  }
+  public get y(): number {
+    return this._y;
+  }
+  public set y(value: number) {
+    this._y = value * devicePixelRatio;
+  }
+
+  private _width!: number;
+  public get absWidth(): number {
+    return this._width / devicePixelRatio;
+  }
+  public get width(): number {
+    return this._width;
+  }
+  public set width(value: number) {
+    this._width = value * devicePixelRatio;
+  }
+
+  private _height!: number;
+  public get absHeight(): number {
+    return this._height / devicePixelRatio;
+  }
+  public get height(): number {
+    return this._height;
+  }
+  public set height(value: number) {
+    this._height = value * devicePixelRatio;
+  }
+
+  color!: string;
+  type!: string;
+
+  constructor(initProps: ViewportItemObject) {
+    Object.assign(this, initProps);
+  }
 }
 
 class ViewportCanvasRenderer {
@@ -186,16 +266,16 @@ class ViewportCanvasRenderer {
 
     this.viewport = viewport;
     const canvas = this.canvas = document.createElement('canvas');
-    canvas.width = viewport.width * devicePixelRatio;
-    canvas.height = viewport.height * devicePixelRatio;
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
     this.ctx = canvas.getContext('2d') as NonNullable<typeof this.ctx>;
-    canvas.style.width = viewport.width + 'px';
-    canvas.style.height = viewport.height + 'px';
+    canvas.style.width = viewport.absWidth + 'px';
+    canvas.style.height = viewport.absHeight + 'px';
     this.render();
   }
 
-  addItem(...items: ViewportItem[]) {
-    this.items.push(...items);
+  addItem(...items: ViewportItemObject[]) {
+    this.items.push(...items.map(item => new ViewportItem(item)));
     this.render();
   }
 
@@ -203,12 +283,12 @@ class ViewportCanvasRenderer {
     if (this.viewport.axis) {
       const { width, height, x, y } = this.viewport;
       this.ctx.beginPath();
-      this.ctx.moveTo(0, (height - y) * devicePixelRatio);
-      this.ctx.lineTo(0, (-height - y) * devicePixelRatio);
+      this.ctx.moveTo(0, height - y);
+      this.ctx.lineTo(0, -height - y);
       this.ctx.stroke();
       this.ctx.beginPath();
-      this.ctx.moveTo((-width - x) * devicePixelRatio, 0);
-      this.ctx.lineTo((width - x) * devicePixelRatio, 0);
+      this.ctx.moveTo(-width - x, 0);
+      this.ctx.lineTo(width - x, 0);
       this.ctx.stroke();
     }
   }
@@ -219,15 +299,15 @@ class ViewportCanvasRenderer {
     switch (item.type) {
     case 'rect':
       ctx.fillStyle = item.color;
-      ctx.fillRect(item.x * devicePixelRatio, item.y * devicePixelRatio, item.width * devicePixelRatio, item.height * devicePixelRatio);
+      ctx.fillRect(item.x, item.y, item.width, item.height);
     }
   }
 
   renderWithoutRaf(ctx = this.ctx) {
     const { width, height, x, y } = this.viewport;
-    ctx.clearRect(0, 0, width * devicePixelRatio, height * devicePixelRatio);
+    ctx.clearRect(0, 0, width, height);
     ctx.save();
-    ctx.translate((width / 2 + x) * devicePixelRatio, (height / 2 + y) * devicePixelRatio);
+    ctx.translate(width / 2 + x, height / 2 + y);
 
     for (const item of this.items) this.drawItem(item);
 
@@ -269,8 +349,8 @@ async function main() {
   let dx = 0, dy = 0;
   document.addEventListener('pointerdown', ({ pageX, pageY }) => {
     isDrag = true;
-    dx = viewport.x;
-    dy = viewport.y;
+    dx = viewport.absX;
+    dy = viewport.absY;
   });
   document.addEventListener('pointermove', ({ movementX, movementY }) => {
     if (!isDrag) return;
