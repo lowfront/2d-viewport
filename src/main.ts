@@ -12,6 +12,8 @@ interface ViewportGridObject {
 interface ViewportObject {
   width: number;
   height: number;
+  minZoomFactor: number;
+  maxZoomFactor: number;
   zoomFactor: number;
   x: number;
   y: number;
@@ -47,12 +49,28 @@ class Viewport implements ViewportObject {
     this._height = value;
   }
 
+  private _minZoomFactor: number = 0.1
+  public get minZoomFactor(): number {
+    return this._minZoomFactor;
+  }
+  public set minZoomFactor(value: number) {
+    this._minZoomFactor = value;
+  }
+
+  private _maxZoomFactor: number = Infinity
+  public get maxZoomFactor(): number {
+    return this._maxZoomFactor;
+  }
+  public set maxZoomFactor(value: number) {
+    this._maxZoomFactor = value;
+  }
+
   private _zoomFactor!: number;
   public get absZoomFactor() {
     return this._zoomFactor;
   }
   public get zoomFactor() {
-    return this._zoomFactor;
+    return Math.max(this._minZoomFactor, Math.min(this._maxZoomFactor, this._zoomFactor));
   }
   public set zoomFactor(value: number) {
     this._zoomFactor = value;
@@ -66,7 +84,7 @@ class Viewport implements ViewportObject {
     return this._x;
   }
   public set x(value: number) {
-    this._x = Math.max(this._minX, Math.min(this._maxX, value));
+    this._x = Math.max(this._minX * this._zoomFactor, Math.min(this._maxX * this._zoomFactor, value));
   }
 
   private _y!: number;
@@ -77,7 +95,7 @@ class Viewport implements ViewportObject {
     return this._y;
   }
   public set y(value: number) {
-    this._y = Math.max(this._minY, Math.min(this._maxY, value));
+    this._y = Math.max(this._minY * this._zoomFactor, Math.min(this._maxY * this._zoomFactor, value));
   }
 
   private _minX: number = -Infinity;
@@ -180,17 +198,19 @@ class Viewport implements ViewportObject {
 const viewport = new Viewport({
   width: 400,
   height: 300,
+  minZoomFactor: 0.1,
+  maxZoomFactor: Infinity,
   zoomFactor: 1,
   x: 0,
   y: 0,
-  // minX: -100,
-  // maxX: 100,
-  // minY: -120,
-  // maxY: 120,
-  minX: -Infinity,
-  maxX: Infinity,
-  minY: -Infinity,
-  maxY: Infinity,
+  minX: -100,
+  maxX: 100,
+  minY: -120,
+  maxY: 120,
+  // minX: -Infinity,
+  // maxX: Infinity,
+  // minY: -Infinity,
+  // maxY: Infinity,
   lock: false,
   axis: true,
   grid: {
@@ -292,10 +312,9 @@ class ViewportCanvasRenderer {
     const absX = layerX - (width / 2 + x);
     const absY = layerY - (height / 2 + y);
     
-    console.log(absX, absY);
-
     const newZoomFactor = typeof val === 'function' ? val(zoomFactor) : val;
     const multipliedZoomFactor = newZoomFactor / zoomFactor;
+
 
     const scaledX = absX * multipliedZoomFactor;
     const scaledY = absY * multipliedZoomFactor;
@@ -304,6 +323,9 @@ class ViewportCanvasRenderer {
     const willMovedY = absY - scaledY; // absY - absY * multipliedZoomFactor => absY(1 - multipliedZoomFactor)
     
     this.viewport.zoomFactor = newZoomFactor;
+    console.log(this.viewport.zoomFactor)
+    if (newZoomFactor !== this.viewport.zoomFactor) return this.render(ctx);
+
     this.viewport.x += willMovedX;
     this.viewport.y += willMovedY;
 
