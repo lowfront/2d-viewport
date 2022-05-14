@@ -70,10 +70,10 @@ class Viewport implements ViewportObject {
     return this._zoomFactor;
   }
   public get zoomFactor() {
-    return Math.max(this._minZoomFactor, Math.min(this._maxZoomFactor, this._zoomFactor));
+    return this._zoomFactor;
   }
   public set zoomFactor(value: number) {
-    this._zoomFactor = value;
+    this._zoomFactor = Math.max(this._minZoomFactor, Math.min(this._maxZoomFactor, value));
   }
 
   private _x!: number;
