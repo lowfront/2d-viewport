@@ -32,6 +32,17 @@ async function main() {
     viewport.y = dy;
     viewportCanvasRenderer.render();
   });
+
+  document.addEventListener('pointermove', (ev) => {
+    const { target, clientX, clientY } = ev;
+    const rect = (ev.target as HTMLElement).getBoundingClientRect();
+    const canvasX = clientX - rect.left;
+    const canvasY = clientY - rect.top;
+    // console.log(canvasX, canvasY);
+    viewportCanvasRenderer.hover(canvasX, canvasY);
+    viewportCanvasRenderer.render();
+  });
+
   document.addEventListener('pointerup', ({}) => {
     isDrag = false;
   });
@@ -41,10 +52,12 @@ async function main() {
     const rect = (ev.target as HTMLElement).getBoundingClientRect();
     // if (!ctrlKey) return;
     ev.preventDefault();
+    const canvasX = clientX - rect.left;
+    const canvasY = clientY - rect.top;
     if (deltaY < 0) {
-      viewportCanvasRenderer.zoom(zoomFactor => zoomFactor * 1.2, clientX - rect.left, clientY - rect.top); // send layerX, layerY
+      viewportCanvasRenderer.zoom(zoomFactor => zoomFactor * 1.2, canvasX, canvasY); // send layerX, layerY
     } else {
-      viewportCanvasRenderer.zoom(zoomFactor => zoomFactor * 0.7, clientX - rect.left, clientY - rect.top); // send layerX, layerY
+      viewportCanvasRenderer.zoom(zoomFactor => zoomFactor * 0.7, canvasX, canvasY); // send layerX, layerY
     }
   }, { passive: false });
 
