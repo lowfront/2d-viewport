@@ -252,6 +252,7 @@
         return this.render(ctx);
       this.viewport.x += willMovedX;
       this.viewport.y += willMovedY;
+      this.hover(layerX, layerY);
       this.render(ctx);
     }
     hover(canvasX, canvasY) {
@@ -280,8 +281,9 @@
           case "graph":
             const { f } = item;
             const value = f(zoomedCanvasX) * zoomFactor;
-            if (Math.abs(value - zoomedCanvasY) < minDist) {
-              minDist = Math.abs(value - zoomedCanvasY);
+            const dist = Math.abs(value - zoomedCanvasY);
+            if (dist < minDist) {
+              minDist = dist;
               nearestItem = item;
               nearestY = value;
             }
@@ -476,6 +478,13 @@
         return Math.sin(x / 50) * 50;
       },
       color: "gray"
+    },
+    {
+      type: "graph",
+      f(x) {
+        return Math.pow(x / 200, 3) * 200;
+      },
+      color: "salmon"
     },
     {
       type: "graph",
