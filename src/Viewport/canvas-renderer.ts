@@ -57,6 +57,8 @@ export class ViewportCanvasRenderer {
     this.viewport.x += willMovedX;
     this.viewport.y += willMovedY;
 
+    this.hover(layerX, layerY)
+
     this.render(ctx);
   }
 
