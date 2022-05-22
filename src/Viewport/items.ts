@@ -75,5 +75,12 @@ export class ViewportItemGraph implements ViewportItemGraphObject {
 
   constructor(initProps: ViewportItemGraphObject) {
     Object.assign(this, initProps);
+    // this.f = (x: number) => initProps.f(x) * -1;
   }
+}
+
+export type ViewportPointer = {
+  x: number;
+  y: number;
+  color: string;
 }
