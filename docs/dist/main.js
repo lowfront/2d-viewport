@@ -298,8 +298,8 @@
         const { width, height, x, y } = this.viewport;
         ctx.strokeStyle = "black";
         ctx.beginPath();
-        ctx.moveTo(0, height / 2 + y);
-        ctx.lineTo(0, -height / 2 + y);
+        ctx.moveTo(0, height / 2 - y);
+        ctx.lineTo(0, -height / 2 - y);
         ctx.stroke();
         ctx.beginPath();
         ctx.moveTo(-width / 2 - x, 0);
