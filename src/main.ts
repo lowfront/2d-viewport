@@ -127,10 +127,20 @@ const items: ViewportItemObject[] = [
     f(x) { return -1/50 * x * x; },
     color: 'purple',
   },
+  // {
+  //   type: 'graph',
+  //   f(x) { return Math.sin(Math.pow(Math.E, x / 100)) * 100; },
+  //   color: 'gray',
+  // },
   {
     type: 'graph',
     f(x) { return Math.sin(x / 50) * 50; },
     color: 'gray',
+  },
+  {
+    type: 'graph',
+    f(x) { return Math.pow(x / 200, 3) * 200},
+    color: 'salmon',
   },
   {
     type: 'graph',
