@@ -73,7 +73,7 @@ export class ViewportCanvasRenderer {
     const cursorX = startX + canvasX;
 
     // 캔버스위의 커서 상대좌표
-    const perX = canvasX / width ;
+    const perX = canvasX / width;
     const perY = canvasY / height;
     // console.log(perX, perY);
 
@@ -87,21 +87,24 @@ export class ViewportCanvasRenderer {
     const zoomedCanvasX = zoomedStartX + (zoomedEndX - zoomedStartX) * perX;
     const zoomedCanvasY = (zoomedStartY + (zoomedEndY - zoomedStartY) * perY) * -1; // 수학좌표로 전환
 
-    // console.log(zoomFactor, zoomedStartX, zoomedEndX, zoomedCanvasX, zoomedCanvasY);
+    // console.log(zoomFactor, zoomedStartY, zoomedEndY, zoomedCanvasY);
 
     let minDist = Infinity;
     let nearestItem: ViewportItemGraph|undefined;
     let nearestY: number|undefined;
+    // console.log('------');
     for (let i = 0; i < this.items.length; i++) {
       const item = this.items[i];
       switch (item.type) {
       case 'rect': break;
       case 'graph':
         const { f } = item;
-          const value = f(zoomedCanvasX) * zoomFactor;
+        const value = f(zoomedCanvasX) * zoomFactor;
+        const dist = Math.abs(value - zoomedCanvasY);
         // f(x좌표 / 확대비율) * 확대비율 => y좌표
-        if (Math.abs(value - zoomedCanvasY) < minDist) {
-          minDist = Math.abs(value - zoomedCanvasY);
+        // console.log(item.color, value, dist);
+        if (dist < minDist) {
+          minDist = dist;
           nearestItem = item;
           nearestY = value;
         }
