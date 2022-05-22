@@ -216,6 +216,7 @@
     items = [];
     canvas;
     ctx;
+    pointer = { x: 0, y: 0, color: "" };
     constructor(viewport2) {
       this.viewport = viewport2;
       const canvas = this.canvas = document.createElement("canvas");
@@ -253,6 +254,45 @@
       this.viewport.y += willMovedY;
       this.render(ctx);
     }
+    hover(canvasX, canvasY) {
+      const { width, height, x, y, zoomFactor } = this.viewport;
+      const startX = -width / 2 - x;
+      const endX = width / 2 - x;
+      const startY = -height / 2 - y;
+      const endY = height / 2 - y;
+      const cursorX = startX + canvasX;
+      const perX = canvasX / width;
+      const perY = canvasY / height;
+      const zoomedStartX = startX / zoomFactor;
+      const zoomedEndX = endX / zoomFactor;
+      const zoomedStartY = startY / zoomFactor;
+      const zoomedEndY = endY / zoomFactor;
+      const zoomedCanvasX = zoomedStartX + (zoomedEndX - zoomedStartX) * perX;
+      const zoomedCanvasY = (zoomedStartY + (zoomedEndY - zoomedStartY) * perY) * -1;
+      let minDist = Infinity;
+      let nearestItem;
+      let nearestY;
+      for (let i = 0; i < this.items.length; i++) {
+        const item = this.items[i];
+        switch (item.type) {
+          case "rect":
+            break;
+          case "graph":
+            const { f } = item;
+            const value = f(zoomedCanvasX) * zoomFactor;
+            if (Math.abs(value - zoomedCanvasY) < minDist) {
+              minDist = Math.abs(value - zoomedCanvasY);
+              nearestItem = item;
+              nearestY = value;
+            }
+        }
+      }
+      if (nearestItem) {
+        this.pointer.x = cursorX;
+        this.pointer.y = nearestY;
+        this.pointer.color = nearestItem.color;
+      }
+    }
     drawAxis(ctx = this.ctx) {
       if (this.viewport.axis) {
         const { width, height, x, y } = this.viewport;
@@ -284,19 +324,29 @@
           ctx.strokeStyle = item.color;
           ctx.moveTo(startX, f(startX));
           for (let i = 0; i <= width; i += 1)
-            ctx.lineTo(startX + i, f((startX + i) / zoomFactor) * zoomFactor);
+            ctx.lineTo(startX + i, f((startX + i) / zoomFactor) * zoomFactor * -1);
           ctx.stroke();
           ctx.closePath();
       }
+    }
+    drawPointer(ctx = this.ctx) {
+      ctx.beginPath();
+      ctx.arc(this.pointer.x, -this.pointer.y, 4, 0, 2 * Math.PI);
+      ctx.font = "16px Segoe UI";
+      ctx.fillStyle = this.pointer.color;
+      ctx.fillText(this.pointer.y.toFixed(4), this.pointer.x + 10, -this.pointer.y + 10);
+      ctx.fill();
+      ctx.closePath();
     }
     renderWithoutRaf(ctx = this.ctx) {
       const { width, height, x, y } = this.viewport;
       ctx.clearRect(0, 0, width, height);
       ctx.save();
       ctx.translate(width / 2 + x, height / 2 + y);
-      ctx.scale(1, -1);
+      ctx.scale(1, 1);
       for (const item of this.items)
         this.drawItem(item);
+      this.drawPointer(ctx);
       this.drawAxis(ctx);
       ctx.restore();
     }
@@ -331,6 +381,14 @@
       viewport.y = dy;
       viewportCanvasRenderer.render();
     });
+    document.addEventListener("pointermove", (ev) => {
+      const { target, clientX, clientY } = ev;
+      const rect = ev.target.getBoundingClientRect();
+      const canvasX = clientX - rect.left;
+      const canvasY = clientY - rect.top;
+      viewportCanvasRenderer.hover(canvasX, canvasY);
+      viewportCanvasRenderer.render();
+    });
     document.addEventListener("pointerup", ({}) => {
       isDrag = false;
     });
@@ -338,10 +396,12 @@
       const { ctrlKey, deltaX, deltaY, clientX, clientY } = ev;
       const rect = ev.target.getBoundingClientRect();
       ev.preventDefault();
+      const canvasX = clientX - rect.left;
+      const canvasY = clientY - rect.top;
       if (deltaY < 0) {
-        viewportCanvasRenderer.zoom((zoomFactor) => zoomFactor * 1.2, clientX - rect.left, clientY - rect.top);
+        viewportCanvasRenderer.zoom((zoomFactor) => zoomFactor * 1.2, canvasX, canvasY);
       } else {
-        viewportCanvasRenderer.zoom((zoomFactor) => zoomFactor * 0.7, clientX - rect.left, clientY - rect.top);
+        viewportCanvasRenderer.zoom((zoomFactor) => zoomFactor * 0.7, canvasX, canvasY);
       }
     }, { passive: false });
     const reset = document.createElement("button");
