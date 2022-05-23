@@ -83,4 +83,5 @@ export type ViewportPointer = {
   x: number;
   y: number;
   color: string;
+  value: number;
 }

@@ -76,7 +76,7 @@ const viewport = new Viewport({
   height: 300,
   minZoomFactor: 0.001,
   maxZoomFactor: Infinity,
-  zoomFactor: 1,
+  zoomFactor: 2,
   x: 0,
   y: 0,
   // minX: -100,

@@ -7,7 +7,7 @@ export class ViewportCanvasRenderer {
   items: ViewportItemObject[] = [];
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
-  pointer: ViewportPointer = { x: 0, y: 0, color: '' };
+  pointer: ViewportPointer = { x: 0, y: 0, color: '', value: 0 };
   constructor(viewport: Viewport) {
 
     this.viewport = viewport;
@@ -94,21 +94,24 @@ export class ViewportCanvasRenderer {
     let minDist = Infinity;
     let nearestItem: ViewportItemGraph|undefined;
     let nearestY: number|undefined;
-    // console.log('------');
+    let pointerValue: number|undefined;
+    console.log('------');
     for (let i = 0; i < this.items.length; i++) {
       const item = this.items[i];
       switch (item.type) {
       case 'rect': break;
       case 'graph':
         const { f } = item;
-        const value = f(zoomedCanvasX) * zoomFactor;
+        const value = f(zoomedCanvasX);
+        const y = value * zoomFactor;
         const dist = Math.abs(value - zoomedCanvasY);
         // f(x좌표 / 확대비율) * 확대비율 => y좌표
-        // console.log(item.color, value, dist);
+        // console.log(item.color, value, 'x', zoomedCanvasX, 'y', zoomedCanvasY, zoomFactor);
         if (dist < minDist) {
           minDist = dist;
           nearestItem = item;
-          nearestY = value;
+          nearestY = y;
+          pointerValue = value;
         }
       }
     }
@@ -116,6 +119,7 @@ export class ViewportCanvasRenderer {
     if (nearestItem) {
       this.pointer.x = cursorX;
       this.pointer.y = nearestY as number;
+      this.pointer.value = pointerValue as number;
       this.pointer.color = nearestItem.color;
     }
   }
@@ -174,7 +178,7 @@ export class ViewportCanvasRenderer {
     ctx.arc(this.pointer.x, -this.pointer.y, 4, 0, 2 * Math.PI); // 수학좌표로 전환
     ctx.font = '16px Segoe UI'
     ctx.fillStyle = this.pointer.color;
-    ctx.fillText(this.pointer.y.toFixed(4), this.pointer.x + 10, -this.pointer.y + 10); // 수학좌표로 전환
+    ctx.fillText(this.pointer.value.toFixed(4), this.pointer.x + 10, -this.pointer.y + 10); // 수학좌표로 전환
     ctx.fill();
     ctx.closePath();
   }
