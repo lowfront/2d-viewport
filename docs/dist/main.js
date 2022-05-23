@@ -216,7 +216,7 @@
     items = [];
     canvas;
     ctx;
-    pointer = { x: 0, y: 0, color: "" };
+    pointer = { x: 0, y: 0, color: "", value: 0 };
     constructor(viewport2) {
       this.viewport = viewport2;
       const canvas = this.canvas = document.createElement("canvas");
@@ -273,6 +273,8 @@
       let minDist = Infinity;
       let nearestItem;
       let nearestY;
+      let pointerValue;
+      console.log("------");
       for (let i = 0; i < this.items.length; i++) {
         const item = this.items[i];
         switch (item.type) {
@@ -280,18 +282,21 @@
             break;
           case "graph":
             const { f } = item;
-            const value = f(zoomedCanvasX) * zoomFactor;
+            const value = f(zoomedCanvasX);
+            const y2 = value * zoomFactor;
             const dist = Math.abs(value - zoomedCanvasY);
             if (dist < minDist) {
               minDist = dist;
               nearestItem = item;
-              nearestY = value;
+              nearestY = y2;
+              pointerValue = value;
             }
         }
       }
       if (nearestItem) {
         this.pointer.x = cursorX;
         this.pointer.y = nearestY;
+        this.pointer.value = pointerValue;
         this.pointer.color = nearestItem.color;
       }
     }
@@ -336,7 +341,7 @@
       ctx.arc(this.pointer.x, -this.pointer.y, 4, 0, 2 * Math.PI);
       ctx.font = "16px Segoe UI";
       ctx.fillStyle = this.pointer.color;
-      ctx.fillText(this.pointer.y.toFixed(4), this.pointer.x + 10, -this.pointer.y + 10);
+      ctx.fillText(this.pointer.value.toFixed(4), this.pointer.x + 10, -this.pointer.y + 10);
       ctx.fill();
       ctx.closePath();
     }
@@ -420,7 +425,7 @@
     height: 300,
     minZoomFactor: 1e-3,
     maxZoomFactor: Infinity,
-    zoomFactor: 1,
+    zoomFactor: 2,
     x: 0,
     y: 0,
     minX: -Infinity,
