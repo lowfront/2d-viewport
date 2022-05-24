@@ -95,7 +95,7 @@ export class ViewportCanvasRenderer {
     let nearestItem: ViewportItemGraph|undefined;
     let nearestY: number|undefined;
     let pointerValue: number|undefined;
-    console.log('------');
+    // console.log('------');
     for (let i = 0; i < this.items.length; i++) {
       const item = this.items[i];
       switch (item.type) {
