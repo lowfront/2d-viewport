@@ -150,8 +150,3 @@ const items: ViewportItemObject[] = [
 ];
 
 main();
-
-enum A {
-  a, b, c
-}
-console.log(A);
