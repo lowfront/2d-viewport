@@ -220,11 +220,11 @@
     constructor(viewport2) {
       this.viewport = viewport2;
       const canvas = this.canvas = document.createElement("canvas");
-      canvas.width = viewport2.width;
-      canvas.height = viewport2.height;
+      canvas.width = viewport2.width * devicePixelRatio;
+      canvas.height = viewport2.height * devicePixelRatio;
       this.ctx = canvas.getContext("2d");
-      canvas.style.width = viewport2.absWidth + "px";
-      canvas.style.height = viewport2.absHeight + "px";
+      canvas.style.width = viewport2.width + "px";
+      canvas.style.height = viewport2.height + "px";
       this.render();
     }
     addItem(...items2) {
@@ -238,7 +238,8 @@
       this.render();
     }
     zoom(val, layerX, layerY, ctx = this.ctx) {
-      const { width, height, x, y, zoomFactor } = this.viewport;
+      const { width, height } = this.canvas;
+      const { x, y, zoomFactor } = this.viewport;
       const absX = layerX - (width / 2 + x);
       const absY = layerY - (height / 2 + y);
       const newZoomFactor = typeof val === "function" ? val(zoomFactor) : val;
@@ -256,7 +257,8 @@
       this.render(ctx);
     }
     hover(canvasX, canvasY) {
-      const { width, height, x, y, zoomFactor } = this.viewport;
+      const { width, height } = this.canvas;
+      const { x, y, zoomFactor } = this.viewport;
       const startX = -width / 2 - x;
       const endX = width / 2 - x;
       const startY = -height / 2 - y;
@@ -274,7 +276,6 @@
       let nearestItem;
       let nearestY;
       let pointerValue;
-      console.log("------");
       for (let i = 0; i < this.items.length; i++) {
         const item = this.items[i];
         switch (item.type) {
@@ -302,7 +303,8 @@
     }
     drawAxis(ctx = this.ctx) {
       if (this.viewport.axis) {
-        const { width, height, x, y } = this.viewport;
+        const { width, height } = this.canvas;
+        const { x, y } = this.viewport;
         ctx.strokeStyle = "black";
         ctx.beginPath();
         ctx.moveTo(0, height / 2 - y);
@@ -324,9 +326,11 @@
           break;
         case "graph":
           const { f } = item;
-          const { width, height, x, y } = this.viewport;
+          const { width, height } = this.canvas;
+          const { x, y } = this.viewport;
           const startX = -width / 2 - x;
           const endX = width / 2 - x;
+          ctx.lineWidth = 1 * devicePixelRatio;
           ctx.beginPath();
           ctx.strokeStyle = item.color;
           ctx.moveTo(startX, f(startX));
@@ -338,23 +342,24 @@
     }
     drawPointer(ctx = this.ctx) {
       ctx.beginPath();
-      ctx.arc(this.pointer.x, -this.pointer.y, 4, 0, 2 * Math.PI);
-      ctx.font = "16px Segoe UI";
+      ctx.arc(this.pointer.x, -this.pointer.y, 3 * devicePixelRatio, 0, 2 * Math.PI);
+      ctx.font = `${Math.floor(12 * devicePixelRatio)}px Segoe UI`;
       ctx.fillStyle = this.pointer.color;
       ctx.fillText(this.pointer.value.toFixed(4), this.pointer.x + 10, -this.pointer.y + 10);
       ctx.fill();
       ctx.closePath();
     }
     renderWithoutRaf(ctx = this.ctx) {
-      const { width, height, x, y } = this.viewport;
+      const { width, height } = this.canvas;
+      const { x, y } = this.viewport;
       ctx.clearRect(0, 0, width, height);
       ctx.save();
       ctx.translate(width / 2 + x, height / 2 + y);
       ctx.scale(1, 1);
+      this.drawAxis(ctx);
       for (const item of this.items)
         this.drawItem(item);
       this.drawPointer(ctx);
-      this.drawAxis(ctx);
       ctx.restore();
     }
     render(ctx = this.ctx) {
@@ -380,8 +385,8 @@
     document.addEventListener("pointermove", ({ target, clientX, clientY }) => {
       if (!isDrag)
         return;
-      dx += clientX - tempX;
-      dy += clientY - tempY;
+      dx += (clientX - tempX) * devicePixelRatio;
+      dy += (clientY - tempY) * devicePixelRatio;
       tempX = clientX;
       tempY = clientY;
       viewport.x = dx;
@@ -393,7 +398,7 @@
       const rect = ev.target.getBoundingClientRect();
       const canvasX = clientX - rect.left;
       const canvasY = clientY - rect.top;
-      viewportCanvasRenderer.hover(canvasX, canvasY);
+      viewportCanvasRenderer.hover(canvasX * devicePixelRatio, canvasY * devicePixelRatio);
       viewportCanvasRenderer.render();
     });
     document.addEventListener("pointerup", ({}) => {
@@ -406,9 +411,9 @@
       const canvasX = clientX - rect.left;
       const canvasY = clientY - rect.top;
       if (deltaY < 0) {
-        viewportCanvasRenderer.zoom((zoomFactor) => zoomFactor * 1.2, canvasX, canvasY);
+        viewportCanvasRenderer.zoom((zoomFactor) => zoomFactor * 1.2, canvasX * devicePixelRatio, canvasY * devicePixelRatio);
       } else {
-        viewportCanvasRenderer.zoom((zoomFactor) => zoomFactor * 0.7, canvasX, canvasY);
+        viewportCanvasRenderer.zoom((zoomFactor) => zoomFactor * 0.7, canvasX * devicePixelRatio, canvasY * devicePixelRatio);
       }
     }, { passive: false });
     const reset = document.createElement("button");
