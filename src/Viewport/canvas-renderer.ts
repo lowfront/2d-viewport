@@ -12,11 +12,11 @@ export class ViewportCanvasRenderer {
 
     this.viewport = viewport;
     const canvas = this.canvas = document.createElement('canvas');
-    canvas.width = viewport.width;
-    canvas.height = viewport.height;
+    canvas.width = viewport.width * devicePixelRatio;
+    canvas.height = viewport.height * devicePixelRatio;
     this.ctx = canvas.getContext('2d') as NonNullable<typeof this.ctx>;
-    canvas.style.width = viewport.absWidth + 'px';
-    canvas.style.height = viewport.absHeight + 'px';
+    canvas.style.width = viewport.width + 'px';
+    canvas.style.height = viewport.height + 'px';
     this.render();
   }
 
@@ -32,7 +32,8 @@ export class ViewportCanvasRenderer {
   }
 
   zoom(val: TypeOrFunction<number>, layerX: number, layerY: number, ctx = this.ctx) {
-    const { width, height, x, y, zoomFactor } = this.viewport;
+    const { width, height } = this.canvas;
+    const { x, y, zoomFactor } = this.viewport;
 
 
 
@@ -63,7 +64,8 @@ export class ViewportCanvasRenderer {
   }
 
   hover(canvasX: number, canvasY: number) {
-    const { width, height, x, y, zoomFactor } = this.viewport;
+    const { width, height } = this.canvas;
+    const { x, y, zoomFactor } = this.viewport;
     // 뷰포트에 그릴 수 있는 실제 좌표, (zoom 적용되지 않은)
     const startX = - width / 2 - x;
     const endX = width / 2 - x;
@@ -126,7 +128,8 @@ export class ViewportCanvasRenderer {
 
   drawAxis(ctx = this.ctx) {
     if (this.viewport.axis) {
-      const { width, height, x, y } = this.viewport;
+      const { width, height } = this.canvas;
+      const { x, y } = this.viewport;
       ctx.strokeStyle = 'black';
       ctx.beginPath();
       ctx.moveTo(0, height / 2 - y);
@@ -155,11 +158,13 @@ export class ViewportCanvasRenderer {
       break;
     case 'graph':
       const { f } = item;
-      const { width, height, x, y } = this.viewport;
+      const { width, height } = this.canvas;
+      const { x, y } = this.viewport;
       // 확대/축소 비율을 고려하지 않고 translate만 고려한 캔버스의 왼쪽 끝, 오른쪽 끝 저장
       const startX = - width / 2 - x;
       const endX = width / 2 - x;
 
+      ctx.lineWidth = 1 * devicePixelRatio;
       ctx.beginPath();
       ctx.strokeStyle = item.color;
       // ctx.fillRect(startX, 0, 10, 10);
@@ -175,8 +180,8 @@ export class ViewportCanvasRenderer {
 
   drawPointer(ctx = this.ctx) {
     ctx.beginPath();
-    ctx.arc(this.pointer.x, -this.pointer.y, 4, 0, 2 * Math.PI); // 수학좌표로 전환
-    ctx.font = '16px Segoe UI'
+    ctx.arc(this.pointer.x, -this.pointer.y, 3 * devicePixelRatio, 0, 2 * Math.PI); // 수학좌표로 전환
+    ctx.font = `${Math.floor(12 * devicePixelRatio)}px Segoe UI`
     ctx.fillStyle = this.pointer.color;
     ctx.fillText(this.pointer.value.toFixed(4), this.pointer.x + 10, -this.pointer.y + 10); // 수학좌표로 전환
     ctx.fill();
@@ -184,16 +189,17 @@ export class ViewportCanvasRenderer {
   }
 
   renderWithoutRaf(ctx = this.ctx) {
-    const { width, height, x, y } = this.viewport;
+    const { width, height } = this.canvas;
+    const { x, y } = this.viewport;
     ctx.clearRect(0, 0, width, height);
     ctx.save();
     ctx.translate(width / 2 + x, height / 2 + y);
     ctx.scale(1, 1); // should change with axis y;
-    for (const item of this.items) this.drawItem(item);
     
+    this.drawAxis(ctx);
+    for (const item of this.items) this.drawItem(item);
     this.drawPointer(ctx);
 
-    this.drawAxis(ctx);
 
     ctx.restore();
   }

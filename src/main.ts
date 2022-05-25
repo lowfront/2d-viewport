@@ -22,8 +22,8 @@ async function main() {
   document.addEventListener('pointermove', ({ target, clientX, clientY }) => {
     if (!isDrag) return;
     
-    dx += clientX - tempX; // 처음에 값을 빼는 방식으로 temp와 dx 합칠 수 있음
-    dy += clientY - tempY;
+    dx += (clientX - tempX) * devicePixelRatio; // 처음에 값을 빼는 방식으로 temp와 dx 합칠 수 있음
+    dy += (clientY - tempY) * devicePixelRatio;
     
     tempX = clientX;
     tempY = clientY;
@@ -39,7 +39,7 @@ async function main() {
     const canvasX = clientX - rect.left;
     const canvasY = clientY - rect.top;
     // console.log(canvasX, canvasY);
-    viewportCanvasRenderer.hover(canvasX, canvasY);
+    viewportCanvasRenderer.hover(canvasX * devicePixelRatio, canvasY * devicePixelRatio);
     viewportCanvasRenderer.render();
   });
 
@@ -55,9 +55,9 @@ async function main() {
     const canvasX = clientX - rect.left;
     const canvasY = clientY - rect.top;
     if (deltaY < 0) {
-      viewportCanvasRenderer.zoom(zoomFactor => zoomFactor * 1.2, canvasX, canvasY); // send layerX, layerY
+      viewportCanvasRenderer.zoom(zoomFactor => zoomFactor * 1.2, canvasX * devicePixelRatio, canvasY * devicePixelRatio); // send layerX, layerY
     } else {
-      viewportCanvasRenderer.zoom(zoomFactor => zoomFactor * 0.7, canvasX, canvasY); // send layerX, layerY
+      viewportCanvasRenderer.zoom(zoomFactor => zoomFactor * 0.7, canvasX * devicePixelRatio, canvasY * devicePixelRatio); // send layerX, layerY
     }
   }, { passive: false });
 
